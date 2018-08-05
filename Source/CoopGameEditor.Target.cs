@@ -10,5 +10,11 @@ public class CoopGameEditorTarget : TargetRules
 		Type = TargetType.Editor;
 
 		ExtraModuleNames.AddRange( new string[] { "CoopGame" } );
-	}
+
+        //Non-Unity-mode
+        bUseUnityBuild = false;
+
+        //New standard
+        bUsePCHFiles = false;
+    }
 }
