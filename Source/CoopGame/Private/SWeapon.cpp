@@ -4,6 +4,7 @@
 #include <Components/SkeletalMeshComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Kismet/GameplayStatics.h>
+#include "Particles/ParticleSystem.h"
 
 
 // Sets default values
@@ -14,6 +15,8 @@ ASWeapon::ASWeapon()
 
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
 	SetRootComponent(MeshComp);
+
+	MuzzleSocketName = "MuzzleSocket";
 }
 
 // Called when the game starts or when spawned
@@ -65,6 +68,17 @@ void ASWeapon::Fire()
 			this,
 			DamageType
 		);
+
+		if (ImpactEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				ImpactEffect,
+				Hit.ImpactPoint,
+				Hit.ImpactNormal.Rotation()
+			);
+		}
+		
 	}
 
 	DrawDebugLine(
@@ -77,6 +91,16 @@ void ASWeapon::Fire()
 		0,
 		1.f
 	);
+
+	if (MuzzleEffect) 
+	{ 
+		UGameplayStatics::SpawnEmitterAttached(
+			MuzzleEffect,
+			MeshComp,
+			MuzzleSocketName
+		);
+	}
+	
 }
 
 // Called every frame
