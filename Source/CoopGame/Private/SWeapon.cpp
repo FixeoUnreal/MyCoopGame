@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SWeapon.h"
-#include <DrawDebugHelpers.h>
-#include <Kismet/GameplayStatics.h>
+#include "CoopGame/Public/SWeapon.h"
+#include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/SkeletalMeshComponent.h"
-#include <Particles/ParticleSystemComponent.h>
+#include "Particles/ParticleSystemComponent.h"
+#include "GameFramework/Pawn.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -123,6 +124,16 @@ void ASWeapon::PlayFireEffects(FVector TracerEndPoint)
 		if (TracerComp)
 		{
 			TracerComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
+		}
+	}
+
+	APawn* MyOwner = Cast<APawn>(GetOwner());
+	if (MyOwner)
+	{
+		APlayerController* PC = Cast<APlayerController>(MyOwner->GetController());
+		if (PC)
+		{
+			PC->ClientPlayCameraShake(FireCamShake);
 		}
 	}
 }
