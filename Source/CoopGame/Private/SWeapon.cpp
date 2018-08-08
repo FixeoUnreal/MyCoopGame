@@ -7,6 +7,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/Pawn.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "CoopGame.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -45,6 +47,7 @@ void ASWeapon::Fire()
 	QueryParams.AddIgnoredActor(MyOwner);
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.bTraceComplex = true;
+	QueryParams.bReturnPhysicalMaterial = true;
 
 	// Particle "Target" parameter
 	FVector TracerEndPoint = TraceEnd;
@@ -72,15 +75,34 @@ void ASWeapon::Fire()
 			DamageType
 		);
 
-		if (ImpactEffect)
+		// Play suitable impact effect
+		EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+		UParticleSystem* SelectedEffect = nullptr;
+		switch (SurfaceType)
+		{
+			case SURFACE_FLESHDEFAULT:
+			case SURFACE_FLESHVULNERABLE:
+			{
+				SelectedEffect = FleshImpactEffect;
+				break;
+			}
+			default:
+			{
+				SelectedEffect = DefaultImpactEffect;
+				break;
+			}
+		}
+
+		if (SelectedEffect)
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(
 				GetWorld(),
-				ImpactEffect,
+				SelectedEffect,
 				Hit.ImpactPoint,
 				Hit.ImpactNormal.Rotation()
 			);
 		}
+
 		TracerEndPoint = Hit.ImpactPoint;
 	}
 
