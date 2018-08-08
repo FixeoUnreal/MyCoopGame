@@ -25,6 +25,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* SpringArmComp;
 
+	bool bWantsToZoom;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Player")
+	float ZoomFOV;
+
+	// Default FOV set during BeginPlay
+	float DefaultFOV;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Player", meta = (ClampMin = 0.1, ClampMax = 100))
+	float ZoomInterpSpeed;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -35,6 +46,10 @@ protected:
 	void BeginCrouch();
 
 	void EndCrouch();
+
+	void BeginZoom();
+
+	void EndZoom();
 
 public:	
 	// Called every frame
