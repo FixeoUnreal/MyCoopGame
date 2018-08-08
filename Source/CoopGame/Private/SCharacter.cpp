@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Public/SCharacter.h"
-#include <Components/InputComponent.h>
-#include <Camera/CameraComponent.h>
-#include <GameFramework/SpringArmComponent.h>
+#include "CoopGame/Public/SCharacter.h"
+#include "Components/InputComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "CoopGame/Public/SWeapon.h"
+#include "Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -23,6 +26,15 @@ ASCharacter::ASCharacter()
 
 	ZoomFOV = 65.f;	
 	ZoomInterpSpeed = 20.f;
+	WeaponAttachSocketName = "WeaponSocket";
+}
+
+void ASCharacter::Fire()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Fire();
+	}
 }
 
 // Called when the game starts or when spawned
@@ -30,6 +42,20 @@ void ASCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Spawn and attach a default weapon
+	if (StarterWeaponClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		CurrentWeapon = GetWorld()->SpawnActor<ASWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+		if (CurrentWeapon)
+		{
+			CurrentWeapon->SetOwner(this);
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
+		}
+	}
+	
+
 	DefaultFOV = CameraComp->FieldOfView;
 }
 
@@ -92,6 +118,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &ASCharacter::BeginZoom);
 	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &ASCharacter::EndZoom);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::Fire);
 }
 
 FVector ASCharacter::GetPawnViewLocation() const
