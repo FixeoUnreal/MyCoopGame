@@ -57,7 +57,7 @@ void ASWeapon::Fire()
 		Hit,
 		EyeLocation,
 		TraceEnd,
-		ECC_Visibility,
+		COLLISION_WEAPON,
 		QueryParams
 	))
 	{
