@@ -9,6 +9,8 @@
 #include "GameFramework/Pawn.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "CoopGame.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -27,6 +29,19 @@ ASWeapon::ASWeapon()
 	MuzzleSocketName = "MuzzleSocket";
 	TracerTargetName = "Target";
 	BaseDamage = 20.f;
+	RateOfFire = 600;
+}
+
+void ASWeapon::StartFire()
+{
+	float FirstDelay = FMath::Max<float>(0.f, LastFireTime + TimeBetweenShots - GetWorld()->TimeSeconds);
+
+	GetWorldTimerManager().SetTimer(TimerHandle_TimeBetweenShot, this, &ASWeapon::Fire, TimeBetweenShots, true, FirstDelay);
+}
+
+void ASWeapon::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBetweenShot);
 }
 
 void ASWeapon::Fire()
@@ -129,6 +144,16 @@ void ASWeapon::Fire()
 	}
 	
 	PlayFireEffects(TracerEndPoint);
+
+	LastFireTime = GetWorld()->TimeSeconds;
+}
+
+void ASWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+
+	TimeBetweenShots = 60 / RateOfFire;
+	LastFireTime = GetWorld()->TimeSeconds;
 }
 
 void ASWeapon::PlayFireEffects(FVector TracerEndPoint)

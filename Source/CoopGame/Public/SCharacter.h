@@ -45,7 +45,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
 	FName WeaponAttachSocketName;
 
-	void Fire();
+	void StartFire();
+
+	void StopFire();
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
