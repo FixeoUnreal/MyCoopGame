@@ -26,6 +26,7 @@ ASWeapon::ASWeapon()
 
 	MuzzleSocketName = "MuzzleSocket";
 	TracerTargetName = "Target";
+	BaseDamage = 20.f;
 }
 
 void ASWeapon::Fire()
@@ -65,9 +66,17 @@ void ASWeapon::Fire()
 
 		AActor* HitActor = Hit.GetActor();
 
+		EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+
+		float ActualDamage = BaseDamage;
+		if (SurfaceType == SURFACE_FLESHVULNERABLE)
+		{
+			ActualDamage *= 4.f;
+		}
+
 		UGameplayStatics::ApplyPointDamage(
 			HitActor,
-			20.f,
+			ActualDamage,
 			ShotDirection,
 			Hit,
 			MyOwner->GetInstigatorController(),
@@ -76,7 +85,6 @@ void ASWeapon::Fire()
 		);
 
 		// Play suitable impact effect
-		EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
 		UParticleSystem* SelectedEffect = nullptr;
 		switch (SurfaceType)
 		{
