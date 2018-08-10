@@ -9,6 +9,8 @@
 class UCameraComponent;
 class USpringArmComponent;
 class ASWeapon;
+class USHealthComponent;
+class UDamageType;
 
 UCLASS()
 class COOPGAME_API ASCharacter : public ACharacter
@@ -45,6 +47,12 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
 	FName WeaponAttachSocketName;
 
+	USHealthComponent* HealthComp;
+
+	// Pawn died previously
+	UPROPERTY(BlueprintReadOnly, Category = "Player")
+	bool bDied;
+
 	void StartFire();
 
 	void StopFire();
@@ -63,6 +71,9 @@ protected:
 	void BeginZoom();
 
 	void EndZoom();
+
+	UFUNCTION()
+	void OnHealthChanged(USHealthComponent* HealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 
 public:	
 	// Called every frame
