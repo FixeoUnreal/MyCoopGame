@@ -6,6 +6,7 @@
 #include <Components/StaticMeshComponent.h>
 #include "Materials/Material.h"
 #include <PhysicsEngine/RadialForceComponent.h>
+#include <UnrealNetwork.h>
 
 // Sets default values
 ASExplosiveBarrel::ASExplosiveBarrel()
@@ -20,6 +21,9 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 
 	RadialForceComp = CreateDefaultSubobject<URadialForceComponent>(TEXT("RadialForceComp"));
 	RadialForceComp->SetupAttachment(RootComponent);
+
+	SetReplicates(true);
+	SetReplicateMovement(true);
 }
 
 // Called when the game starts or when spawned
@@ -29,25 +33,14 @@ void ASExplosiveBarrel::BeginPlay()
 	
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASExplosiveBarrel::OnHealthChanged);
 
-	if (DefaultMaterial && MeshComp)
-	{
-		MeshComp->SetMaterial(0, DefaultMaterial);
-	}
 }
 
 void ASExplosiveBarrel::OnHealthChanged(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Health <= 0.f && !bExploded)
 	{
-		if (ExplosionEffect)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorTransform());
-		}
-
-		if (ExplodedMaterial && MeshComp)
-		{
-			MeshComp->SetMaterial(0, ExplodedMaterial);
-		}
+		bExploded = true;
+		OnRep_bExploded();
 
 		if (MeshComp && MeshComp->IsSimulatingPhysics())
 		{
@@ -60,6 +53,21 @@ void ASExplosiveBarrel::OnHealthChanged(USHealthComponent* OwningHealthComp, flo
 			RadialForceComp->FireImpulse();
 			UE_LOG(LogTemp, Warning, TEXT("After fire impulse"));
 		}
+
+		
+	}
+}
+
+void ASExplosiveBarrel::OnRep_bExploded()
+{
+	if (ExplosionEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorTransform());
+	}
+
+	if (ExplodedMaterial && MeshComp)
+	{
+		MeshComp->SetMaterial(0, ExplodedMaterial);
 	}
 }
 
@@ -68,5 +76,12 @@ void ASExplosiveBarrel::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ASExplosiveBarrel::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASExplosiveBarrel, bExploded);
 }
 

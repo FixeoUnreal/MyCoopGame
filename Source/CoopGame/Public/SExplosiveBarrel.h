@@ -28,10 +28,13 @@ protected:
 	UFUNCTION()
 	void OnHealthChanged(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 
+	UFUNCTION()
+	void OnRep_bExploded();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USHealthComponent* HealthComp;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Explosion")
+	UPROPERTY(ReplicatedUsing=OnRep_bExploded, BlueprintReadOnly, Category = "Explosion")
 	bool bExploded;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Explosion")
@@ -53,6 +56,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 };
