@@ -153,7 +153,7 @@ void ASWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TimeBetweenShots = 60 / RateOfFire;
+	TimeBetweenShots = 60.f / RateOfFire;
 	LastFireTime = GetWorld()->TimeSeconds;
 }
 
