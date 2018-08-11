@@ -52,7 +52,7 @@ protected:
 	USHealthComponent* HealthComp;
 
 	// Pawn died previously
-	UPROPERTY(BlueprintReadOnly, Category = "Player")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player")
 	bool bDied;
 
 	void StartFire();
