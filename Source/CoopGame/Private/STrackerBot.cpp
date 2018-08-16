@@ -9,12 +9,15 @@
 #include "CoopGame/Public/SHealthComponent.h"
 #include <Materials/MaterialInstanceDynamic.h>
 #include "DrawDebugHelpers.h"
+#include <Components/SphereComponent.h>
+#include "Public/SCharacter.h"
+#include "TimerManager.h"
 
 
 // Sets default values
 ASTrackerBot::ASTrackerBot()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -24,6 +27,13 @@ ASTrackerBot::ASTrackerBot()
 
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
+
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetSphereRadius(200.f);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetupAttachment(RootComponent);
 
 	bUseVelocityChange = true;
 	MovementForce = 1000.f;
@@ -37,9 +47,10 @@ ASTrackerBot::ASTrackerBot()
 void ASTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	// Find initial move-to
 	NexPathPoint = GetNextPathPoint();
+
 }
 
 FVector ASTrackerBot::GetNextPathPoint()
@@ -60,7 +71,7 @@ FVector ASTrackerBot::GetNextPathPoint()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	
+
 
 	if (!MatInst)
 	{
@@ -72,7 +83,7 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float H
 
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Current Health of %s: %f"), *GetName(),Health);
+	UE_LOG(LogTemp, Warning, TEXT("Current Health of %s: %f"), *GetName(), Health);
 
 	// Explode on hitpoints == 0
 	if (Health <= 0.f)
@@ -83,7 +94,7 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float H
 
 void ASTrackerBot::SelfDestruct()
 {
-	if(bExploded){ return; }
+	if (bExploded) { return; }
 
 	bExploded = true;
 
@@ -94,8 +105,15 @@ void ASTrackerBot::SelfDestruct()
 	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 32, FColor::Orange, false, 2.f, 0, 1.f);
 
+	GetWorldTimerManager().ClearTimer(TimerHandle_SelfDamage);
+
 	// Delete Actor immediately
 	Destroy();
+}
+
+void ASTrackerBot::DamageSelf()
+{
+	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
 }
 
 // Called every frame
@@ -120,4 +138,20 @@ void ASTrackerBot::Tick(float DeltaTime)
 	}
 }
 
+void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	if (!bStartedSelfDestruction)
+	{
+		ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
+		if (PlayerPawn)
+		{
+			// Overlapped with a player!
+
+			//Start self destruction sequence
+			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, 0.5f, true, 0.f);
+
+			bStartedSelfDestruction = true;
+		}
+	}
+}
 
