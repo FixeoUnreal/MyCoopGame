@@ -7,6 +7,9 @@
 #include "STrackerBot.generated.h"
 
 class UStaticMeshComponent;
+class USHealthComponent;
+class UDamageType;
+class AController;
 
 UCLASS()
 class COOPGAME_API ASTrackerBot : public APawn
@@ -23,6 +26,9 @@ protected:
 
 	FVector GetNextPathPoint();
 
+	UFUNCTION()
+	void HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	UStaticMeshComponent* MeshComp;
 
@@ -37,6 +43,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float RequiredDistanceToTarget;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USHealthComponent* HealthComp;
 
 public:	
 	// Called every frame

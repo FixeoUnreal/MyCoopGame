@@ -6,6 +6,7 @@
 #include "NavigationPath.h"
 #include <Kismet/GameplayStatics.h>
 #include <GameFramework/Character.h>
+#include "CoopGame/Public/SHealthComponent.h"
 
 
 // Sets default values
@@ -18,6 +19,9 @@ ASTrackerBot::ASTrackerBot()
 	MeshComp->SetCanEverAffectNavigation(false);
 	MeshComp->SetSimulatePhysics(true);
 	SetRootComponent(MeshComp);
+
+	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
 
 	bUseVelocityChange = true;
 	MovementForce = 1000.f;
@@ -47,6 +51,13 @@ FVector ASTrackerBot::GetNextPathPoint()
 
 	// Failed to find path
 	return GetActorLocation();
+}
+
+void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	// Explode on hitpoints == 0
+
+	UE_LOG(LogTemp, Warning, TEXT("Current Health of %s: %f"), *GetName(),Health);
 }
 
 // Called every frame
