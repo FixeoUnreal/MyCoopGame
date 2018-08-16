@@ -12,6 +12,7 @@
 #include <Components/SphereComponent.h>
 #include "Public/SCharacter.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -41,6 +42,7 @@ ASTrackerBot::ASTrackerBot()
 
 	ExplosionDamage = 40.f;
 	ExplosionRadius = 200.f;
+	SelfDamageInterval = 0.2f;
 }
 
 // Called when the game starts or when spawned
@@ -107,6 +109,8 @@ void ASTrackerBot::SelfDestruct()
 
 	GetWorldTimerManager().ClearTimer(TimerHandle_SelfDamage);
 
+	UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
+
 	// Delete Actor immediately
 	Destroy();
 }
@@ -148,9 +152,11 @@ void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 			// Overlapped with a player!
 
 			//Start self destruction sequence
-			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, 0.5f, true, 0.f);
+			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, SelfDamageInterval, true, 0.f);
 
 			bStartedSelfDestruction = true;
+
+			UGameplayStatics::SpawnSoundAttached(SelfDestructSound, RootComponent);
 		}
 	}
 }
