@@ -35,6 +35,8 @@ protected:
 
 	void DamageSelf();
 
+	void PowerUp();
+
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	UStaticMeshComponent* MeshComp;
 
@@ -81,6 +83,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	USoundCue* ExplodeSound;
+
+	float PowerLevel;
+
+	FTimerHandle TimerHandle_PowerUp;
+
+	float MaxPowerLevel;
 
 public:	
 	// Called every frame

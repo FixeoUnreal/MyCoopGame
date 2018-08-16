@@ -34,6 +34,7 @@ ASTrackerBot::ASTrackerBot()
 	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	SphereComp->SetupAttachment(RootComponent);
 
 	bUseVelocityChange = true;
@@ -43,6 +44,9 @@ ASTrackerBot::ASTrackerBot()
 	ExplosionDamage = 40.f;
 	ExplosionRadius = 200.f;
 	SelfDamageInterval = 0.2f;
+
+	PowerLevel = 0;
+	MaxPowerLevel = 10.f;
 }
 
 // Called when the game starts or when spawned
@@ -56,7 +60,7 @@ void ASTrackerBot::BeginPlay()
 		NexPathPoint = GetNextPathPoint();
 	}
 
-
+	GetWorldTimerManager().SetTimer(TimerHandle_PowerUp, this, &ASTrackerBot::PowerUp, 1.f, true, 0.f);
 }
 
 FVector ASTrackerBot::GetNextPathPoint()
@@ -91,7 +95,8 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float H
 	{
 		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
 	}
-	else
+
+	if(MatInst)
 	{
 		MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
 
@@ -125,6 +130,7 @@ void ASTrackerBot::SelfDestruct()
 		// Apply damage
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
+		ExplosionDamage *= (PowerLevel + 1.f);
 		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 32, FColor::Orange, false, 2.f, 0, 1.f);
 
@@ -137,6 +143,33 @@ void ASTrackerBot::SelfDestruct()
 void ASTrackerBot::DamageSelf()
 {
 	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
+}
+
+void ASTrackerBot::PowerUp()
+{
+	TArray<AActor*> OverlappingActors;
+	SphereComp->GetOverlappingActors(OverlappingActors);
+
+	int BotNum = 0;
+	for (AActor* OverlapActor : OverlappingActors)
+	{
+		ASTrackerBot* Bot = Cast<ASTrackerBot>(OverlapActor);
+		if (Bot)
+		{
+			++BotNum;
+		}
+	}
+
+	PowerLevel = (float)BotNum;
+	if (!MatInst)
+	{
+		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+	}
+	if (MatInst)
+	{
+		float Alpha = FMath::Clamp(PowerLevel / MaxPowerLevel, 0.f, 1.f);
+		MatInst->SetScalarParameterValue("PowerLevelAlpha", Alpha);
+	}
 }
 
 // Called every frame
