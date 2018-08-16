@@ -8,6 +8,7 @@
 #include <GameFramework/Character.h>
 #include "CoopGame/Public/SHealthComponent.h"
 #include <Materials/MaterialInstanceDynamic.h>
+#include "DrawDebugHelpers.h"
 
 
 // Sets default values
@@ -27,6 +28,9 @@ ASTrackerBot::ASTrackerBot()
 	bUseVelocityChange = true;
 	MovementForce = 1000.f;
 	RequiredDistanceToTarget = 100.f;
+
+	ExplosionDamage = 40.f;
+	ExplosionRadius = 200.f;
 }
 
 // Called when the game starts or when spawned
@@ -56,7 +60,7 @@ FVector ASTrackerBot::GetNextPathPoint()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	// Explode on hitpoints == 0
+	
 
 	if (!MatInst)
 	{
@@ -69,6 +73,29 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float H
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Current Health of %s: %f"), *GetName(),Health);
+
+	// Explode on hitpoints == 0
+	if (Health <= 0.f)
+	{
+		SelfDestruct();
+	}
+}
+
+void ASTrackerBot::SelfDestruct()
+{
+	if(bExploded){ return; }
+
+	bExploded = true;
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorTransform());
+
+	// Apply damage
+	TArray<AActor*> IgnoredActors;
+	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 32, FColor::Orange, false, 2.f, 0, 1.f);
+
+	// Delete Actor immediately
+	Destroy();
 }
 
 // Called every frame
