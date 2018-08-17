@@ -3,6 +3,9 @@
 #include "CoopGame/Public/SPickupActor.h"
 #include <Components/SphereComponent.h>
 #include <Components/DecalComponent.h>
+#include "CoopGame/Public/SPowerupActor.h"
+#include <Engine/World.h>
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -23,12 +26,36 @@ void ASPickupActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	Respawn();
+}
+
+void ASPickupActor::Respawn()
+{
+	if (!PowerupClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerupClass is nullptr in %s. Please update your BP"), *GetName());
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	PowerupInstance = GetWorld()->SpawnActor<ASPowerupActor>(PowerupClass, GetTransform(), SpawnParams);
+
 }
 
 void ASPickupActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
+	if (PowerupInstance)
+	{
+		PowerupInstance->ActivatePowerup();
+		PowerupInstance = nullptr;
 
+		// Set timer to respawn
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ASPickupActor::Respawn, CooldownDuration);
+
+	}
 }
 
