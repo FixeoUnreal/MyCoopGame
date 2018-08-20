@@ -3,12 +3,15 @@
 #include "CoopGame/Public/SHealthComponent.h"
 #include <GameFramework/Actor.h>
 #include <UnrealNetwork.h>
+#include "SGameMode.h"
+#include "Engine/World.h"
 
 
 // Sets default values for this component's properties
 USHealthComponent::USHealthComponent()
 {
 	DefaultHealth = 100.f;
+	bIsDead = false;
 
 	SetIsReplicated(true);
 }
@@ -42,13 +45,24 @@ void USHealthComponent::OnRep_Health(float OldHealth)
 
 void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	if(Damage <= 0.f){ return; }
+	if(Damage <= 0.f || bIsDead){ return; }
 
 	// Update health clamped
 	Health = FMath::Clamp(Health - Damage, 0.f, DefaultHealth);
 
 	UE_LOG(LogTemp, Warning, TEXT("Heath changed: %f"), Health);
+	bIsDead = Health <= 0.f;
 	OnHealthChanged.Broadcast(this, Health, Damage, DamageType, InstigatedBy, DamageCauser);
+
+	if (bIsDead)
+	{
+		ASGameMode* GM = Cast<ASGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM)
+		{
+			GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
+		}
+	}
+	
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
