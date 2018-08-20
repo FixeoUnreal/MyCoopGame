@@ -43,6 +43,8 @@ protected:
 
 	void SetWaveState(EWaveState NewState);
 
+	void RestartDeadPlayer();
+
 protected:
 	FTimerHandle TimerHandle_BotSpawner;
 
