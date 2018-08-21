@@ -31,6 +31,7 @@ ASWeapon::ASWeapon()
 	TracerTargetName = "Target";
 	BaseDamage = 20.f;
 	RateOfFire = 600;
+	BulletSpread = 2.f;
 
 	SetReplicates(true);
 	NetUpdateFrequency = 66.f;
@@ -63,7 +64,12 @@ void ASWeapon::Fire()
 	FVector EyeLocation;
 	FRotator EyeRotation;
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-	FVector TraceEnd = EyeLocation + (EyeRotation.Vector() * 10000);
+	FVector ShotDirection = EyeRotation.Vector();
+
+	// Bullet spread
+	float HalfRad = FMath::DegreesToRadians(BulletSpread);
+	ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
+	FVector TraceEnd = EyeLocation + (ShotDirection * 10000);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(MyOwner);
@@ -95,7 +101,7 @@ void ASWeapon::Fire()
 		{
 			ActualDamage *= 4.f;
 		}
-		FVector ShotDirection = EyeRotation.Vector();
+		
 
 		UGameplayStatics::ApplyPointDamage(
 			HitActor,
