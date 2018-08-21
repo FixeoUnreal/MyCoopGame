@@ -13,6 +13,8 @@ USHealthComponent::USHealthComponent()
 	DefaultHealth = 100.f;
 	bIsDead = false;
 
+	TeamNum = 255;
+
 	SetIsReplicated(true);
 }
 
@@ -46,6 +48,12 @@ void USHealthComponent::OnRep_Health(float OldHealth)
 void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	if(Damage <= 0.f || bIsDead){ return; }
+
+	// No damage on friendly fire
+	if (DamageCauser != DamagedActor && IsFriendly(DamagedActor, DamageCauser))
+	{
+		return;
+	}
 
 	// Update health clamped
 	Health = FMath::Clamp(Health - Damage, 0.f, DefaultHealth);
@@ -85,5 +93,26 @@ void USHealthComponent::Heal(float HealAmount)
 float USHealthComponent::GetHealth() const
 {
 	return Health;
+}
+
+bool USHealthComponent::IsFriendly(AActor* ActorA, AActor* ActorB)
+{
+	if (!ActorA || !ActorB)
+	{
+		// Assume friendly
+		return true;
+	}
+
+	USHealthComponent* HealthCompA = Cast<USHealthComponent>(ActorA->GetComponentByClass(USHealthComponent::StaticClass()));
+	USHealthComponent* HealthCompB = Cast<USHealthComponent>(ActorB->GetComponentByClass(USHealthComponent::StaticClass()));
+
+	if (!HealthCompA || !HealthCompB)
+	{
+		// Assume friendly
+		return true;
+	}
+
+	return HealthCompA->TeamNum == HealthCompB->TeamNum;
+
 }
 
