@@ -37,6 +37,8 @@ protected:
 
 	void PowerUp();
 
+	void RefreshPath();
+
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	UStaticMeshComponent* MeshComp;
 
@@ -89,6 +91,8 @@ protected:
 	FTimerHandle TimerHandle_PowerUp;
 
 	float MaxPowerLevel;
+
+	FTimerHandle TimerHandle_RefreshPath;
 
 public:	
 	// Called every frame
