@@ -55,10 +55,6 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player")
 	bool bDied;
 
-	void StartFire();
-
-	void StopFire();
-
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -87,5 +83,11 @@ public:
 	virtual FVector GetPawnViewLocation() const override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	void StartFire();
+
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	void StopFire();
 	
 };
